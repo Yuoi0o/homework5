@@ -1,7 +1,35 @@
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.HashSet;
+
 public class WordRecommender {
 
-    public WordRecommender(String dictionaryFile) {    
-      // TODO: change this!
+    private ArrayList<String> dictionary;
+
+    public WordRecommender(String dictionaryFile) {
+      dictionary = new ArrayList<>();
+      Scanner s = null;
+      HashSet<String> addedWords = new HashSet<>();
+
+      try{
+          s = new Scanner(new FileInputStream(dictionaryFile));
+
+          while (s.hasNextLine()){
+              String word = s.nextLine();
+
+              if (!addedWords.contains(word)){
+                  addedWords.add(word);
+                  dictionary.add(word);
+              }
+          }
+      } catch (IOException e){
+          throw new IllegalArgumentException(e);
+      } finally{
+          if (s != null){
+              s.close();
+          }
+      }
     }
   
     public double getSimilarity(String word1, String word2) {
