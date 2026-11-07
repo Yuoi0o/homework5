@@ -33,8 +33,23 @@ public class WordRecommender {
     }
   
     public double getSimilarity(String word1, String word2) {
-      // TODO: change this!
-      return 0.0;
+      int leftSimilarity = 0;
+      int rightSimilarity = 0;
+
+      int minDistance = Math.min(word1.length(), word2.length());
+
+        // Left similarity refers to the number of common characters between two Strings when we left-align both Strings and compare characters in all positions
+      for (int i = 0; i < minDistance; i++) {
+          if (word1.charAt(i) == word2.charAt(i)) {
+              leftSimilarity++;
+          }
+
+          // Right similarity refers to the number of common characters between two Strings when we right-align both Strings and compare characters in all positions
+          if (word1.charAt(word1.length()-1-i) == word2.charAt(word2.length()-1-i)){
+              rightSimilarity++;
+          }
+      }
+      return (leftSimilarity + rightSimilarity) / 2.0;
     }
   
     public ArrayList<String> getWordSuggestions(String word, int tolerance, double commonPercent, int topN) {
