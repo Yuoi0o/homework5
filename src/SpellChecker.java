@@ -19,9 +19,10 @@ public class SpellChecker {
     }
 
     public void start() {
-        HashSet<String> dictionary = new HashSet<String>();
+        HashSet<String> dictionary = new HashSet<>();
         String dictionaryFilename = readDictionary(dictionary);
         WordRecommender recommender = new WordRecommender(dictionaryFilename);
+
         checkFile(dictionary, recommender);
         inputReader.close();  // DO NOT MODIFY - must be the last line of this method!
     }
@@ -36,9 +37,11 @@ public class SpellChecker {
                 while (dictionaryReader.hasNext()) {
                     dictionary.add(dictionaryReader.next());
                 }
+
                 if (dictionaryReader.ioException() != null) {
                     throw dictionaryReader.ioException();
                 }
+
                 System.out.printf(Util.DICTIONARY_SUCCESS_NOTIFICATION, filename);
                 return filename;
             } catch (IOException exception) {
@@ -48,8 +51,7 @@ public class SpellChecker {
     }
 
     private void checkFile(HashSet<String> dictionary, WordRecommender recommender) {
-        boolean finished = false;
-        while (!finished) {
+        while (true) {
             System.out.printf(Util.FILENAME_PROMPT);
             String inputFilename = inputReader.nextLine().trim();
             String outputFilename = getOutputFilename(inputFilename);
@@ -59,13 +61,14 @@ public class SpellChecker {
                 System.out.printf(Util.FILE_SUCCESS_NOTIFICATION,
                         inputFilename, outputFilename);
                 writeCheckedWords(fileReader, outputWriter, dictionary, recommender);
+
                 if (fileReader.ioException() != null) {
                     throw fileReader.ioException();
                 }
                 if (outputWriter.checkError()) {
                     throw new IOException("Could not write the corrected file.");
                 }
-                finished = true;
+                return;
             } catch (IOException exception) {
                 System.out.printf(Util.FILE_OPENING_ERROR);
             }
@@ -74,8 +77,8 @@ public class SpellChecker {
 
     private String getOutputFilename(String inputFilename) {
         if (inputFilename.endsWith(INPUT_SUFFIX)) {
-            return inputFilename.substring(0,
-                    inputFilename.length() - INPUT_SUFFIX.length()) + OUTPUT_SUFFIX;
+            int extensionStart = inputFilename.length() - INPUT_SUFFIX.length();
+            return inputFilename.substring(0, extensionStart) + OUTPUT_SUFFIX;
         }
         return inputFilename + OUTPUT_SUFFIX;
     }
@@ -88,6 +91,7 @@ public class SpellChecker {
             if (!dictionary.contains(word)) {
                 word = correctWord(word, recommender);
             }
+
             if (!firstWord) {
                 outputWriter.print(" ");
             }
@@ -101,6 +105,25 @@ public class SpellChecker {
         ArrayList<String> suggestions = recommender.getWordSuggestions(word,
                 LENGTH_TOLERANCE, MINIMUM_COMMON_PERCENT, MAXIMUM_SUGGESTIONS);
 
+        printSuggestions(suggestions);
+
+        while (true) {
+            String choice = inputReader.nextLine().trim();
+            if (choice.equals("a")) {
+                return word;
+            }
+            if (choice.equals("t")) {
+                System.out.printf(Util.MANUAL_REPLACEMENT_PROMPT);
+                return inputReader.nextLine().trim();
+            }
+            if (choice.equals("r") && !suggestions.isEmpty()) {
+                return chooseSuggestion(suggestions);
+            }
+            System.out.printf(Util.INVALID_RESPONSE);
+        }
+    }
+
+    private void printSuggestions(ArrayList<String> suggestions) {
         if (suggestions.isEmpty()) {
             System.out.printf(Util.NO_SUGGESTIONS);
             System.out.printf(Util.TWO_OPTION_PROMPT);
@@ -111,19 +134,6 @@ public class SpellChecker {
             }
             System.out.printf(Util.THREE_OPTION_PROMPT);
         }
-
-        while (true) {
-            String choice = inputReader.nextLine().trim();
-            if (choice.equals("a")) {
-                return word;
-            } else if (choice.equals("t")) {
-                System.out.printf(Util.MANUAL_REPLACEMENT_PROMPT);
-                return inputReader.nextLine().trim();
-            } else if (choice.equals("r") && !suggestions.isEmpty()) {
-                return chooseSuggestion(suggestions);
-            }
-            System.out.printf(Util.INVALID_RESPONSE);
-        }
     }
 
     private String chooseSuggestion(ArrayList<String> suggestions) {
@@ -131,11 +141,13 @@ public class SpellChecker {
         while (true) {
             String response = inputReader.nextLine().trim();
             try {
-                int number = Integer.parseInt(response);
-                if (number >= 1 && number <= suggestions.size()) {
-                    return suggestions.get(number - 1);
+                int suggestionNumber = Integer.parseInt(response);
+                if (suggestionNumber >= 1 && suggestionNumber <= suggestions.size()) {
+                    return suggestions.get(suggestionNumber - 1);
                 }
             } catch (NumberFormatException exception) {
+                System.out.printf(Util.INVALID_RESPONSE);
+                continue;
             }
             System.out.printf(Util.INVALID_RESPONSE);
         }
